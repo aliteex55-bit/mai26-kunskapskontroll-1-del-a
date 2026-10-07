@@ -1,3 +1,6 @@
+#:property PublishAot=false
+// Inställningen ovan gör att filen kan köras direkt med dotnet utan extra AOT-paket.
+
 using System; // Gör att vi kan använda Console.
 using System.Collections.Generic; // Gör att vi kan använda List.
 
