@@ -30,9 +30,26 @@ while (true) // Upprepar programmet tills användaren avslutar.
         continue; // Börjar nästa varv i loopen.
     }
 
-    if (int.TryParse(input, out int number)) // Försöker läsa texten som ett heltal utan att krascha.
+    string numberText = input.Trim(); // Tar bort mellanslag runt ett möjligt nummer.
+
+    if (numberText.StartsWith("+") || numberText.StartsWith("-")) // Ett heltal kan börja med plus eller minus.
     {
-        if (number >= 1 && number <= names.Count) // Kontrollerar att numret finns i listan.
+        numberText = numberText.Substring(1); // Tar bort tecknet inför kontrollen av siffrorna.
+    }
+
+    bool isNumber = numberText.Length > 0; // Ett nummer måste innehålla minst en siffra.
+
+    foreach (char character in numberText) // Kontrollerar varje tecken, även i mycket stora nummer.
+    {
+        if (character < '0' || character > '9') // Kontrollerar om tecknet inte är en siffra.
+        {
+            isNumber = false; // Text med andra tecken behandlas som ett varunamn.
+        }
+    }
+
+    if (isNumber) // Heltalstext används för borttagning, även om talet är för stort för int.
+    {
+        if (int.TryParse(input, out int number) && number >= 1 && number <= names.Count) // Numret måste rymmas i int och finnas i listan.
         {
             int index = number - 1; // Listans index börjar på 0, men numreringen börjar på 1.
             names.RemoveAt(index); // Tar bort varans namn.
