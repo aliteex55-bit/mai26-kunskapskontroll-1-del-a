@@ -25,6 +25,11 @@ Raden `#:property PublishAot=false` är en bygginställning som gör att filen k
 
 Exempel: lägg till Mjölk för 15 kr, Bröd för 32 kr och Ost för 89 kr. Summan blir 136 kr. Skriv `2` för att ta bort Bröd. Ost får då nummer 2 och summan blir 104 kr.
 
+## Flödesschema
+
+`flodesschema.html` är ett klickbart flödesschema över programmet. Klicka på ett steg för att se koden i `Inkopslista.cs` som utför det, med en enkel förklaring.
+Öppna det på [GitHub Pages](https://aliteex55-bit.github.io/mai26-kunskapskontroll-1-del-a/flodesschema.html), eller öppna filen i en webbläsare.
+
 ## Kontrollerat
 
 Tillägg, ordningsföljd, numrering, totalsumma, synkron borttagning, felaktiga priser, nummer utanför listan och mycket stora nummer har provkörts. Extrafunktionerna `dyrast` och `sortera` är provkörda på tom lista, på lika priser och med borttagning efter sortering.
