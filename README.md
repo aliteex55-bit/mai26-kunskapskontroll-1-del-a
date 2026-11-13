@@ -32,7 +32,7 @@ Klicka dig igenom rutorna här: https://aliteex55-bit.github.io/mai26-kunskapsko
 
 ### Del A – block för block
 
-Här är de 21 rutorna i samma ordning som på den publicerade sidan. Till varje ruta: namn, fil och rader, och en kort förklaring du kan säga högt på kunskapskontrollen. Klicka på rutan i flödesschemat om du vill se koden samtidigt.
+Här är de 21 rutorna i samma ordning som på den publicerade sidan. Klicka på rutan i flödesschemat om du vill se koden samtidigt.
 
 #### 1. Start: två tomma listor
 
