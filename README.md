@@ -41,6 +41,8 @@ cd del-b
 dotnet run
 ```
 
+**Flödesschema för del B:** [öppna det klickbara flödesschemat](https://aliteex55-bit.github.io/mai26-kunskapskontroll-1-del-a/del-b/flodesschema.html). Det visar provkörningen i `Program.cs` och vad som händer inuti `Enroll`, `Join`, `Remove` och `Leave`, med koden bakom varje steg.
+
 Del B finns också som eget repo: [mai26-kunskapskontroll-1-del-b](https://github.com/aliteex55-bit/mai26-kunskapskontroll-1-del-b).
 
 ## Kontrollerat

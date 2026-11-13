@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kurser och studerande – flöde och kod</title>
+<style>
+:root {
+  --bg: #ffffff; --panel: #f6f7f9; --text: #1a1a18; --muted: #5f6368; --line: #c9ccd1;
+  --accent: #2f6df6; --accent-soft: #e6eefe; --warn: #b8860b; --warn-soft: #fff7e0;
+  --err: #c0392b; --err-soft: #fdecec; --code-bg: #fbfbfc; --hl: #fff3bf;
+  --c-kw: #0b55c8; --c-str: #a3320b; --c-com: #5d7a5d; --c-num: #0e7c6b; --c-type: #267f99;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16181c; --panel: #1e2126; --text: #e8e8e6; --muted: #a2a6ad; --line: #3a3f47;
+    --accent: #5b8cff; --accent-soft: #223050; --warn: #e0b040; --warn-soft: #3a3118;
+    --err: #ff7b6b; --err-soft: #40201d; --code-bg: #1a1c21; --hl: #4a4116;
+    --c-kw: #7fb0ff; --c-str: #f0a37f; --c-com: #86a886; --c-num: #6fd6c4; --c-type: #6fc3df;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16181c; --panel: #1e2126; --text: #e8e8e6; --muted: #a2a6ad; --line: #3a3f47;
+  --accent: #5b8cff; --accent-soft: #223050; --warn: #e0b040; --warn-soft: #3a3118;
+  --err: #ff7b6b; --err-soft: #40201d; --code-bg: #1a1c21; --hl: #4a4116;
+  --c-kw: #7fb0ff; --c-str: #f0a37f; --c-com: #86a886; --c-num: #6fd6c4; --c-type: #6fc3df;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 "Segoe UI", system-ui, Arial, sans-serif; }
+header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+header .hint { color: var(--muted); font-size: 13px; flex: 1; min-width: 200px; }
+button { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:focus-visible, .node:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); height: calc(100% - 55px); }
+#chart { padding: 12px 16px; overflow: auto; border-right: 1px solid var(--line); }
+#chart svg { width: 100%; height: auto; display: block; font: 13px "Segoe UI", system-ui, Arial, sans-serif; }
+#panel { padding: 16px 20px 40px; overflow: auto; }
+.ln { stroke: var(--muted); stroke-width: 1.5; }
+#arr path { fill: var(--muted); }
+.lbl { fill: var(--muted); font-size: 12px; }
+.node { cursor: pointer; }
+.node rect, .node polygon { fill: var(--bg); stroke: var(--muted); stroke-width: 1.5; }
+.node text { fill: var(--text); pointer-events: none; }
+.node:hover rect, .node:hover polygon { stroke: var(--accent); stroke-width: 2.5; }
+.k-pill rect { fill: var(--panel); }
+.k-diamond polygon { fill: var(--warn-soft); stroke: var(--warn); }
+.k-err rect { fill: var(--err-soft); stroke: var(--err); }
+.sec { fill: var(--muted); font-size: 13px; font-weight: 600; }
+.k-class rect { fill: var(--panel); }
+.k-loop rect { fill: var(--panel); stroke-dasharray: 5 4; }
+.node.sel rect, .node.sel polygon { stroke: var(--accent); stroke-width: 4; fill: var(--accent-soft); }
+.node.sel text { font-weight: 600; }
+#panel h2 { font-size: 22px; margin: 0 0 6px; }
+.say { background: var(--accent-soft); border-left: 4px solid var(--accent); padding: 10px 14px; border-radius: 4px; margin: 10px 0 18px; font-size: 16px; }
+.say b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; margin-bottom: 2px; }
+.ref { margin: 0 0 26px; }
+.ref h3 { font-size: 16px; margin: 0 0 2px; }
+.ref .where { color: var(--muted); font-size: 13px; font-family: Consolas, "Cascadia Mono", monospace; }
+.ref .what { margin: 6px 0 8px; }
+.code { background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; overflow-x: auto; }
+.code table { border-collapse: collapse; font: 13px/1.45 Consolas, "Cascadia Mono", "Courier New", monospace; min-width: 100%; }
+.code td { padding: 0 10px; white-space: pre; vertical-align: top; }
+.code td.n { color: var(--muted); text-align: right; user-select: none; border-right: 1px solid var(--line); width: 1%; }
+.code tr.hl td { background: var(--hl); }
+.code tr.mark td.n { color: var(--accent); font-weight: 700; }
+.t-kw { color: var(--c-kw); } .t-str { color: var(--c-str); } .t-com { color: var(--c-com); font-style: italic; }
+.t-num { color: var(--c-num); } .t-type { color: var(--c-type); }
+ul.pts { list-style: none; margin: 8px 0 0; padding: 0; }
+ul.pts li { display: flex; gap: 10px; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
+ul.pts li:hover, ul.pts li.on { background: var(--hl); }
+ul.pts .ln-no { font-family: Consolas, monospace; color: var(--accent); font-weight: 700; min-width: 64px; }
+.empty { color: var(--muted); font-size: 17px; margin-top: 40px; }
+.nav { display: flex; gap: 8px; align-items: center; }
+.pos { color: var(--muted); font-size: 13px; min-width: 60px; text-align: center; }
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; height: auto; }
+  #chart { border-right: 0; border-bottom: 1px solid var(--line); }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Kurser och studerande – flöde och kod</h1>
+  <span class="hint">Klicka på en ruta för att se koden bakom steget. Pilarna ← → går till föregående och nästa ruta.</span>
+  <div class="nav">
+    <button id="prev" type="button">← Föregående</button>
+    <span class="pos" id="pos"></span>
+    <button id="next" type="button">Nästa →</button>
+    <button id="theme" type="button">Ljust/mörkt</button>
+  </div>
+</header>
+<main>
+  <section id="chart" aria-label="Flödesschema">
+    <svg viewBox="0 0 1000 900" role="group" aria-label="Flödesschema över kurser och studerande">
+      <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<text class="sec" x="40" y="18">Program.cs: provkörningen</text>
+<text class="sec" x="330" y="72">Anmälan: Join och Enroll</text>
+<text class="sec" x="330" y="205">Klasserna</text>
+<text class="sec" x="330" y="452">Borttagning: Leave och Remove</text>
+<text class="sec" x="330" y="742">Utskrift</text>
+<path class="ln" d="M150 72 V98" marker-end="url(#arr)" fill="none"/>
+<path class="ln" d="M150 142 V168" marker-end="url(#arr)" fill="none"/>
+<path class="ln" d="M150 212 V238" marker-end="url(#arr)" fill="none"/>
+<path class="ln" d="M150 282 V308" marker-end="url(#arr)" fill="none"/>
+<path class="ln" d="M150 352 V378" marker-end="url(#arr)" fill="none"/>
+<path class="ln" d="M150 422 V448" marker-end="url(#arr)" fill="none"/>
+<path class="ln" d="M150 492 V518" marker-end="url(#arr)" fill="none"/>
+<path class="ln" d="M150 562 V588" marker-end="url(#arr)" fill="none"/>
+<path class="ln" d="M150 632 V658" marker-end="url(#arr)" fill="none"/>
+<path class="ln" d="M530 110 H580" marker-end="url(#arr)" fill="none"/>
+<text class="lbl" x="534" y="102">anropar</text>
+<path class="ln" d="M680 132 V165" marker-end="url(#arr)" fill="none"/>
+<path class="ln" d="M780 200 H815" marker-end="url(#arr)" fill="none"/>
+<text class="lbl" x="784" y="193">ja</text>
+<path class="ln" d="M680 235 V265" marker-end="url(#arr)" fill="none"/>
+<text class="lbl" x="688" y="252">nej</text>
+<path class="ln" d="M780 300 H815" marker-end="url(#arr)" fill="none"/>
+<text class="lbl" x="784" y="293">ja</text>
+<path class="ln" d="M680 335 V368" marker-end="url(#arr)" fill="none"/>
+<text class="lbl" x="688" y="352">nej</text>
+<path class="ln" d="M530 490 H580" marker-end="url(#arr)" fill="none"/>
+<text class="lbl" x="534" y="482">anropar</text>
+<path class="ln" d="M680 512 V545" marker-end="url(#arr)" fill="none"/>
+<path class="ln" d="M780 580 H815" marker-end="url(#arr)" fill="none"/>
+<text class="lbl" x="784" y="573">nej</text>
+<path class="ln" d="M680 615 V648" marker-end="url(#arr)" fill="none"/>
+<text class="lbl" x="688" y="632">ja</text>
+<g class="node k-pill" data-id="start" tabindex="0" role="button" aria-label="Programmet startar i Program.cs">
+<rect x="40" y="28" width="220" height="44" rx="22"/>
+<text x="150" y="54.0" text-anchor="middle">Start: Program.cs</text>
+</g>
+<g class="node k-box" data-id="courses" tabindex="0" role="button" aria-label="Skapa två kurser">
+<rect x="40" y="98" width="220" height="44" rx="6"/>
+<text x="150" y="124.0" text-anchor="middle">Skapa två kurser</text>
+</g>
+<g class="node k-box" data-id="students" tabindex="0" role="button" aria-label="Skapa tre studerande">
+<rect x="40" y="168" width="220" height="44" rx="6"/>
+<text x="150" y="194.0" text-anchor="middle">Skapa tre studerande</text>
+</g>
+<g class="node k-box" data-id="enrollrun" tabindex="0" role="button" aria-label="Anmäl från båda hållen">
+<rect x="40" y="238" width="220" height="44" rx="6"/>
+<text x="150" y="264.0" text-anchor="middle">Anmäl från båda hållen</text>
+</g>
+<g class="node k-box" data-id="print1" tabindex="0" role="button" aria-label="Visa att båda hållen stämmer">
+<rect x="40" y="308" width="220" height="44" rx="6"/>
+<text x="150" y="326.5" text-anchor="middle">Skriv ut upprop</text>
+<text x="150" y="341.5" text-anchor="middle">och scheman</text>
+</g>
+<g class="node k-box" data-id="duprun" tabindex="0" role="button" aria-label="Prova reglerna">
+<rect x="40" y="378" width="220" height="44" rx="6"/>
+<text x="150" y="396.5" text-anchor="middle">Prova dubbelanmälan</text>
+<text x="150" y="411.5" text-anchor="middle">och full kurs</text>
+</g>
+<g class="node k-box" data-id="print2" tabindex="0" role="button" aria-label="Visa att inget ändrades">
+<rect x="40" y="448" width="220" height="44" rx="6"/>
+<text x="150" y="474.0" text-anchor="middle">Skriv ut igen</text>
+</g>
+<g class="node k-box" data-id="removerun" tabindex="0" role="button" aria-label="Ta bort från båda hållen">
+<rect x="40" y="518" width="220" height="44" rx="6"/>
+<text x="150" y="536.5" text-anchor="middle">Ta bort från</text>
+<text x="150" y="551.5" text-anchor="middle">båda hållen</text>
+</g>
+<g class="node k-box" data-id="print3" tabindex="0" role="button" aria-label="Visa slutläget">
+<rect x="40" y="588" width="220" height="44" rx="6"/>
+<text x="150" y="614.0" text-anchor="middle">Skriv ut slutläget</text>
+</g>
+<g class="node k-pill" data-id="end" tabindex="0" role="button" aria-label="Programmet tar slut">
+<rect x="40" y="658" width="220" height="44" rx="22"/>
+<text x="150" y="684.0" text-anchor="middle">Slut</text>
+</g>
+<g class="node k-class" data-id="clscourse" tabindex="0" role="button" aria-label="Klassen Course">
+<rect x="330" y="218" width="200" height="44" rx="6"/>
+<text x="430" y="236.5" text-anchor="middle">Klassen Course</text>
+<text x="430" y="251.5" text-anchor="middle">Name, MaxSeats, Students</text>
+</g>
+<g class="node k-class" data-id="clsstudent" tabindex="0" role="button" aria-label="Klassen Student">
+<rect x="330" y="308" width="200" height="44" rx="6"/>
+<text x="430" y="326.5" text-anchor="middle">Klassen Student</text>
+<text x="430" y="341.5" text-anchor="middle">Name, Courses</text>
+</g>
+<g class="node k-box" data-id="join" tabindex="0" role="button" aria-label="Join: gå med i en kurs">
+<rect x="330" y="88" width="200" height="44" rx="6"/>
+<text x="430" y="114.0" text-anchor="middle">student.Join(kurs)</text>
+</g>
+<g class="node k-box" data-id="enroll" tabindex="0" role="button" aria-label="Enroll: anmäl en studerande">
+<rect x="580" y="88" width="200" height="44" rx="6"/>
+<text x="680" y="114.0" text-anchor="middle">kurs.Enroll(student)</text>
+</g>
+<g class="node k-diamond" data-id="ddup" tabindex="0" role="button" aria-label="Är den studerande redan anmäld?">
+<polygon points="680,165 780,200 680,235 580,200"/>
+<text x="680" y="204.0" text-anchor="middle">Redan i kursen?</text>
+</g>
+<g class="node k-err" data-id="errdup" tabindex="0" role="button" aria-label="Redan anmäld">
+<rect x="815" y="178" width="170" height="44" rx="6"/>
+<text x="900" y="196.5" text-anchor="middle">Säg: redan</text>
+<text x="900" y="211.5" text-anchor="middle">anmäld</text>
+</g>
+<g class="node k-diamond" data-id="dfull" tabindex="0" role="button" aria-label="Är kursen full?">
+<polygon points="680,265 780,300 680,335 580,300"/>
+<text x="680" y="304.0" text-anchor="middle">Kursen full?</text>
+</g>
+<g class="node k-err" data-id="errfull" tabindex="0" role="button" aria-label="Kursen är full">
+<rect x="815" y="278" width="170" height="44" rx="6"/>
+<text x="900" y="296.5" text-anchor="middle">Säg: kursen</text>
+<text x="900" y="311.5" text-anchor="middle">är full</text>
+</g>
+<g class="node k-box" data-id="add" tabindex="0" role="button" aria-label="Koppla ihop åt båda hållen">
+<rect x="580" y="368" width="200" height="44" rx="6"/>
+<text x="680" y="394.0" text-anchor="middle">Lägg till i båda listorna</text>
+</g>
+<g class="node k-box" data-id="leave" tabindex="0" role="button" aria-label="Leave: lämna en kurs">
+<rect x="330" y="468" width="200" height="44" rx="6"/>
+<text x="430" y="494.0" text-anchor="middle">student.Leave(kurs)</text>
+</g>
+<g class="node k-box" data-id="remove" tabindex="0" role="button" aria-label="Remove: ta bort en studerande">
+<rect x="580" y="468" width="200" height="44" rx="6"/>
+<text x="680" y="494.0" text-anchor="middle">kurs.Remove(student)</text>
+</g>
+<g class="node k-diamond" data-id="din" tabindex="0" role="button" aria-label="Är den studerande anmäld?">
+<polygon points="680,545 780,580 680,615 580,580"/>
+<text x="680" y="584.0" text-anchor="middle">Finns i kursen?</text>
+</g>
+<g class="node k-err" data-id="errin" tabindex="0" role="button" aria-label="Inte anmäld">
+<rect x="815" y="558" width="170" height="44" rx="6"/>
+<text x="900" y="576.5" text-anchor="middle">Säg: inte</text>
+<text x="900" y="591.5" text-anchor="middle">anmäld</text>
+</g>
+<g class="node k-box" data-id="rem" tabindex="0" role="button" aria-label="Ta bort kopplingen åt båda hållen">
+<rect x="580" y="648" width="200" height="44" rx="6"/>
+<text x="680" y="674.0" text-anchor="middle">Ta bort ur båda listorna</text>
+</g>
+<g class="node k-box" data-id="rollcall" tabindex="0" role="button" aria-label="RollCall: kursens upprop">
+<rect x="330" y="758" width="200" height="44" rx="6"/>
+<text x="430" y="784.0" text-anchor="middle">kurs.RollCall()</text>
+</g>
+<g class="node k-box" data-id="schedule" tabindex="0" role="button" aria-label="Schedule: den studerandes schema">
+<rect x="580" y="758" width="200" height="44" rx="6"/>
+<text x="680" y="784.0" text-anchor="middle">student.Schedule()</text>
+</g>
+<g class="node k-box" data-id="ctostring" tabindex="0" role="button" aria-label="Hur en kurs visas som text">
+<rect x="330" y="838" width="200" height="44" rx="6"/>
+<text x="430" y="864.0" text-anchor="middle">Course.ToString()</text>
+</g>
+<g class="node k-box" data-id="stostring" tabindex="0" role="button" aria-label="Hur en studerande visas som text">
+<rect x="580" y="838" width="200" height="44" rx="6"/>
+<text x="680" y="864.0" text-anchor="middle">Student.ToString()</text>
+</g>
+    </svg>
+  </section>
+  <section id="panel" aria-live="polite">
+    <p class="empty">Klicka på en ruta i flödesschemat till vänster.<br>Då visas koden som utför steget, med en enkel förklaring.</p>
+  </section>
+</main>
+<script id="data" type="application/json">{"nodes":{"add":{"name":"Koppla ihop åt båda hållen","refs":[{"code":"Students.Add(student); // Lägger till den studerande i kursens lista.\nstudent.Courses.Add(this); // Lägger till den här kursen i den studerandes lista.\nConsole.WriteLine($\"{student.Name} anmäldes till {Name}.\"); // Bekräftar anmälan.","file":"Course.cs","from":27,"points":[{"line":27,"text":"Den studerande läggs till i kursen."},{"line":28,"text":"Kursen läggs till hos den studerande."}],"title":"Kopplingen","to":29,"what":"this är kursen själv."}],"say":"Den studerande läggs i kursens lista och kursen i den studerandes lista, i samma metod. Därför stämmer båda hållen alltid."},"clscourse":{"name":"Klassen Course","refs":[{"code":"public class Course // Beskriver en kurs och dess studerande.\n{\n    public string Name; // Sparar kursens namn.\n    public int MaxSeats; // Sparar det största tillåtna antalet studerande.\n    public List<Student> Students = new List<Student>(); // Skapar kursens lista med studerande.\n\n    public Course(string name, int maxSeats) // Körs när en ny kurs skapas.\n    {\n        Name = name; // Sparar namnet som skickades till konstruktorn.\n        MaxSeats = maxSeats; // Sparar hur många platser kursen har.\n    }","file":"Course.cs","from":1,"points":[{"line":3,"text":"Kursens namn."},{"line":4,"text":"Hur många som får plats."},{"line":5,"text":"Kursens studerande. Listan skapas tom."},{"line":7,"text":"Konstruktorn tar emot namn och platser."}],"title":"Fälten och konstruktorn","to":11,"what":"Konstruktorn körs när man skriver new Course(...)."}],"say":"En ritning för kurser. Varje kurs har ett namn, ett max antal platser och en lista med sina studerande."},"clsstudent":{"name":"Klassen Student","refs":[{"code":"public class Student // Beskriver en studerande och dennes kurser.\n{\n    public string Name; // Sparar den studerandes namn.\n    public List<Course> Courses = new List<Course>(); // Skapar den studerandes lista med kurser.\n\n    public Student(string name) // Körs när en ny studerande skapas.\n    {\n        Name = name; // Sparar namnet som skickades till konstruktorn.\n    }","file":"Student.cs","from":1,"points":[{"line":3,"text":"Den studerandes namn."},{"line":4,"text":"Den studerandes kurser. Listan skapas tom."}],"title":"Fälten och konstruktorn","to":9,"what":"Course har en lista med Student, och Student har en lista med Course. Det är kopplingen åt båda hållen."}],"say":"En ritning för studerande. Varje studerande har ett namn och en lista med sina kurser."},"courses":{"name":"Skapa två kurser","refs":[{"code":"Course matematik = new Course(\"Matematik\", 2); // Skapar en kurs med två platser.\nCourse programmering = new Course(\"Programmering\", 3); // Skapar en kurs med tre platser.","file":"Program.cs","from":1,"points":[{"line":1,"text":"Bara två platser: tredje anmälan ska nekas."},{"line":2,"text":"Tre platser."}],"title":"Kurserna","to":2,"what":"new Course(...) anropar konstruktorn i Course.cs med namn och antal platser."}],"say":"Två Course-objekt skapas med new. Matematik får 2 platser, så det går att prova att kursen blir full."},"ctostring":{"name":"Hur en kurs visas som text","refs":[{"code":"public override string ToString() // Bestämmer hur kursen visas som text.\n{\n    return $\"{Name} ({Students.Count}/{MaxSeats} platser)\"; // Returnerar namn samt upptagna och totala platser.\n}","file":"Course.cs","from":60,"points":[],"title":"ToString","to":63,"what":"override ersätter standardversionen, som annars bara skriver klassens namn."}],"say":"ToString bestämmer vad som skrivs när en kurs skrivs ut, till exempel \"Matematik (2/2 platser)\"."},"ddup":{"name":"Är den studerande redan anmäld?","refs":[{"code":"if (Students.Contains(student)) // Kontrollerar om samma studerande redan finns i kursen.\n{\n    Console.WriteLine($\"{student.Name} är redan anmäld till {Name}.\"); // Förklarar varför ingen läggs till.\n    return; // Avslutar metoden så att en dubblett inte skapas.\n}","file":"Course.cs","from":15,"points":[],"title":"Dubblettkontrollen","to":19,"what":"return avslutar metoden direkt."}],"say":"Contains kontrollerar om samma objekt redan finns i listan. I så fall avbryts anmälan, så ingen dubblett skapas."},"dfull":{"name":"Är kursen full?","refs":[{"code":"if (Students.Count >= MaxSeats) // Kontrollerar om alla platser redan är upptagna.\n{\n    Console.WriteLine($\"Kursen {Name} är full.\"); // Meddelar att det inte finns plats.\n    return; // Avslutar metoden utan att ändra någon lista.\n}","file":"Course.cs","from":21,"points":[],"title":"Platskontrollen","to":25,"what":"Count är antalet i listan."}],"say":"Är antalet studerande lika med eller större än MaxSeats finns ingen plats kvar."},"din":{"name":"Är den studerande anmäld?","refs":[{"code":"if (!Students.Contains(student)) // Kontrollerar om den studerande saknas i kursen.\n{\n    Console.WriteLine($\"{student.Name} är inte anmäld till {Name}.\"); // Förklarar varför ingen tas bort.\n    return; // Avslutar metoden utan att krascha.\n}","file":"Course.cs","from":34,"points":[],"title":"Kontrollen","to":38,"what":"return avslutar metoden direkt."}],"say":"! betyder \"inte\". Finns den studerande inte i kursen avbryts metoden, så inget kraschar."},"duprun":{"name":"Prova reglerna","refs":[{"code":"Console.WriteLine(\"\\nDUBBELANMÄLAN OCH FULL KURS\"); // Börjar nästa del av provkörningen.\nmatematik.Enroll(anna); // Försöker anmäla Anna igen genom kursen.\nerik.Join(matematik); // Försöker anmäla Erik igen genom den studerande.\nmatematik.Enroll(sara); // Försöker lägga till Sara när kursens två platser är upptagna.\nsara.Join(matematik); // Testar att samma platsgräns gäller genom Join.","file":"Program.cs","from":20,"points":[{"line":21,"text":"Anna är redan anmäld: ska nekas."},{"line":22,"text":"Samma sak via Join."},{"line":23,"text":"Kursen har två platser och två studerande: full."},{"line":24,"text":"Platsgränsen gäller även via Join."}],"title":"Försöken","to":24,"what":"Inget av försöken ska ändra listorna."}],"say":"Samma studerande anmäls igen, och en studerande försöker komma in i en full kurs. Båda ska nekas, från båda hållen."},"end":{"name":"Programmet tar slut","refs":[{"code":"sara.Schedule(); // Visar att Saras programmeringskurs finns kvar.","file":"Program.cs","from":41,"points":[],"title":"Sista raden","to":41,"what":"När den här raden är klar avslutas programmet."}],"say":"Efter sista raden i Program.cs finns inget mer att köra."},"enroll":{"name":"Enroll: anmäl en studerande","refs":[{"code":"public void Enroll(Student student) // Anmäler en studerande om reglerna tillåter det.\n{\n    if (Students.Contains(student)) // Kontrollerar om samma studerande redan finns i kursen.\n    {\n        Console.WriteLine($\"{student.Name} är redan anmäld till {Name}.\"); // Förklarar varför ingen läggs till.\n        return; // Avslutar metoden så att en dubblett inte skapas.\n    }\n\n    if (Students.Count >= MaxSeats) // Kontrollerar om alla platser redan är upptagna.\n    {\n        Console.WriteLine($\"Kursen {Name} är full.\"); // Meddelar att det inte finns plats.\n        return; // Avslutar metoden utan att ändra någon lista.\n    }\n\n    Students.Add(student); // Lägger till den studerande i kursens lista.\n    student.Courses.Add(this); // Lägger till den här kursen i den studerandes lista.\n    Console.WriteLine($\"{student.Name} anmäldes till {Name}.\"); // Bekräftar anmälan.\n}","file":"Course.cs","from":13,"points":[],"title":"Hela Enroll","to":30,"what":"Två kontroller, och sedan läggs kopplingen till åt båda hållen."}],"say":"All anmälan går genom den här metoden. Den kontrollerar två regler innan något läggs till."},"enrollrun":{"name":"Anmäl från båda hållen","refs":[{"code":"Console.WriteLine(\"ANMÄLAN FRÅN BÅDA HÅLLEN\"); // Visar vad som testas.\nmatematik.Enroll(anna); // Anmäler Anna genom kursens metod.\nerik.Join(matematik); // Anmäler Erik genom den studerandes metod.\nanna.Join(programmering); // Anna går nu i två kurser.\nprogrammering.Enroll(sara); // Anmäler Sara till programmering.","file":"Program.cs","from":8,"points":[{"line":9,"text":"Via kursen."},{"line":10,"text":"Via den studerande. Join anropar Enroll."},{"line":11,"text":"Anna går nu två kurser."}],"title":"Anmälningarna","to":12,"what":"Båda sätten slutar i samma metod, Enroll i Course.cs."}],"say":"Några anmälningar görs via kursen (Enroll) och några via den studerande (Join). Resultatet ska bli detsamma."},"errdup":{"name":"Redan anmäld","refs":[{"code":"Console.WriteLine($\"{student.Name} är redan anmäld till {Name}.\"); // Förklarar varför ingen läggs till.\nreturn; // Avslutar metoden så att en dubblett inte skapas.","file":"Course.cs","from":17,"points":[],"title":"Meddelandet","to":18,"what":"Inget läggs till i någon lista."}],"say":"Programmet säger till och ändrar ingenting."},"errfull":{"name":"Kursen är full","refs":[{"code":"Console.WriteLine($\"Kursen {Name} är full.\"); // Meddelar att det inte finns plats.\nreturn; // Avslutar metoden utan att ändra någon lista.","file":"Course.cs","from":23,"points":[],"title":"Meddelandet","to":24,"what":"Inget läggs till i någon lista."}],"say":"Programmet säger till och ändrar ingenting."},"errin":{"name":"Inte anmäld","refs":[{"code":"Console.WriteLine($\"{student.Name} är inte anmäld till {Name}.\"); // Förklarar varför ingen tas bort.\nreturn; // Avslutar metoden utan att krascha.","file":"Course.cs","from":36,"points":[],"title":"Meddelandet","to":37,"what":"Inget tas bort."}],"say":"Programmet säger till i stället för att krascha."},"join":{"name":"Join: gå med i en kurs","refs":[{"code":"public void Join(Course course) // Anmäler den studerande till en kurs.\n{\n    course.Enroll(this); // Låter kursen kontrollera reglerna och uppdatera båda listorna.\n}","file":"Student.cs","from":11,"points":[{"line":13,"text":"Låter kursen göra jobbet, så reglerna bara finns på ett ställe."}],"title":"Join","to":14,"what":"this är den studerande själv."}],"say":"Join gör inget eget. Den skickar vidare till kursens Enroll. Därför gäller samma regler oavsett vilket håll anmälan görs från."},"leave":{"name":"Leave: lämna en kurs","refs":[{"code":"public void Leave(Course course) // Avanmäler den studerande från en kurs.\n{\n    course.Remove(this); // Låter kursen ta bort kopplingen ur båda listorna.\n}","file":"Student.cs","from":16,"points":[{"line":18,"text":"Låter kursen ta bort kopplingen ur båda listorna."}],"title":"Leave","to":19,"what":"Samma idé som Join."}],"say":"Leave skickar vidare till kursens Remove, precis som Join skickar vidare till Enroll."},"print1":{"name":"Visa att båda hållen stämmer","refs":[{"code":"matematik.RollCall(); // Visar att Anna och Erik finns i matematik.\nprogrammering.RollCall(); // Visar att Anna och Sara finns i programmering.\nanna.Schedule(); // Visar Annas båda kurser.\nerik.Schedule(); // Visar Eriks kurs.\nsara.Schedule(); // Visar Saras kurs.","file":"Program.cs","from":14,"points":[],"title":"Utskrifterna","to":18,"what":"Jämför uppropet med schemana: Anna och Erik i Matematik, och Matematik hos Anna och Erik."}],"say":"RollCall visar kursernas studerande och Schedule de studerandes kurser. Samma koppling ska synas från båda hållen."},"print2":{"name":"Visa att inget ändrades","refs":[{"code":"matematik.RollCall(); // Visar att kursen fortfarande bara har Anna och Erik, en gång var.\nanna.Schedule(); // Visar att Annas kurser inte har fått någon dubblett.\nerik.Schedule(); // Visar att Eriks kurs inte har fått någon dubblett.\nsara.Schedule(); // Visar att Sara inte lades till i den fulla kursen.","file":"Program.cs","from":26,"points":[],"title":"Utskrifterna","to":29,"what":"Samma utskrift som innan visar att reglerna höll."}],"say":"Uppropet och schemana skrivs ut igen. Inga dubbletter och ingen tredje studerande i Matematik."},"print3":{"name":"Visa slutläget","refs":[{"code":"matematik.RollCall(); // Visar att matematikkursen nu är tom.\nprogrammering.RollCall(); // Visar att Anna och Sara fortfarande går i programmering.\nanna.Schedule(); // Visar att matematik är borta ur Annas kurser.\nerik.Schedule(); // Visar att Erik inte längre går i någon kurs.\nsara.Schedule(); // Visar att Saras programmeringskurs finns kvar.","file":"Program.cs","from":37,"points":[],"title":"Utskrifterna","to":41,"what":"Borttagningen syns från båda hållen."}],"say":"Matematik är tom, och kursen är borta ur Annas och Eriks scheman. Programmering är kvar."},"rem":{"name":"Ta bort kopplingen åt båda hållen","refs":[{"code":"Students.Remove(student); // Tar bort den studerande ur kursens lista.\nstudent.Courses.Remove(this); // Tar också bort kursen ur den studerandes lista.\nConsole.WriteLine($\"{student.Name} togs bort från {Name}.\"); // Bekräftar borttagningen.","file":"Course.cs","from":40,"points":[{"line":40,"text":"Ur kursens lista."},{"line":41,"text":"Ur den studerandes lista."}],"title":"Borttagningen","to":42,"what":"Båda listorna ändras tillsammans."}],"say":"Den studerande tas bort ur kursen och kursen ur den studerandes lista, i samma metod."},"remove":{"name":"Remove: ta bort en studerande","refs":[{"code":"public void Remove(Student student) // Tar bort en studerande från kursen.\n{\n    if (!Students.Contains(student)) // Kontrollerar om den studerande saknas i kursen.\n    {\n        Console.WriteLine($\"{student.Name} är inte anmäld till {Name}.\"); // Förklarar varför ingen tas bort.\n        return; // Avslutar metoden utan att krascha.\n    }\n\n    Students.Remove(student); // Tar bort den studerande ur kursens lista.\n    student.Courses.Remove(this); // Tar också bort kursen ur den studerandes lista.\n    Console.WriteLine($\"{student.Name} togs bort från {Name}.\"); // Bekräftar borttagningen.\n}","file":"Course.cs","from":32,"points":[],"title":"Hela Remove","to":43,"what":"En kontroll, och sedan tas kopplingen bort åt båda hållen."}],"say":"All borttagning går genom den här metoden."},"removerun":{"name":"Ta bort från båda hållen","refs":[{"code":"Console.WriteLine(\"\\nBORTTAGNING FRÅN BÅDA HÅLLEN\"); // Börjar sista delen av provkörningen.\nmatematik.Remove(anna); // Tar bort Anna genom kursens metod.\nerik.Leave(matematik); // Tar bort Erik genom den studerandes metod.\nmatematik.Remove(sara); // Testar att ta bort någon som inte är anmäld.\nsara.Leave(matematik); // Testar samma sak genom Leave utan att programmet kraschar.","file":"Program.cs","from":31,"points":[{"line":32,"text":"Via kursen."},{"line":33,"text":"Via den studerande."},{"line":34,"text":"Sara är inte anmäld: ska inte krascha."}],"title":"Borttagningarna","to":35,"what":"Leave anropar Remove, så reglerna finns på ett ställe."}],"say":"Studerande tas bort via kursen (Remove) och via den studerande (Leave). Sara, som inte är anmäld, tas också bort: det ska inte krascha."},"rollcall":{"name":"RollCall: kursens upprop","refs":[{"code":"public void RollCall() // Skriver ut kursens studerande.\n{\n    Console.WriteLine($\"\\nUpprop: {this}\"); // Använder ToString för att visa kursnamn och platser.\n\n    if (Students.Count == 0) // Kontrollerar om kursen saknar studerande.\n    {\n        Console.WriteLine(\"Inga studerande är anmälda.\"); // Visar att listan är tom.\n    }\n\n    foreach (Student student in Students) // Går igenom varje studerande i listan.\n    {\n        Console.WriteLine($\"- {student}\"); // Använder den studerandes ToString för att visa namnet.\n    }\n}","file":"Course.cs","from":45,"points":[{"line":47,"text":"this i en textsträng använder kursens ToString."},{"line":49,"text":"Tom kurs."},{"line":54,"text":"En rad per studerande."}],"title":"RollCall","to":58,"what":"foreach går igenom listan."}],"say":"Skriver kursen och sedan varje studerande på en egen rad. Är kursen tom står det det."},"schedule":{"name":"Schedule: den studerandes schema","refs":[{"code":"public void Schedule() // Skriver ut den studerandes kurser.\n{\n    Console.WriteLine($\"\\nKurser för {this}:\"); // Använder ToString för att visa den studerandes namn.\n\n    if (Courses.Count == 0) // Kontrollerar om den studerande saknar kurser.\n    {\n        Console.WriteLine(\"Inga kurser.\"); // Visar att listan är tom.\n    }\n\n    foreach (Course course in Courses) // Går igenom varje kurs i listan.\n    {\n        Console.WriteLine($\"- {course}\"); // Använder kursens ToString för att visa namn och platser.\n    }\n}","file":"Student.cs","from":21,"points":[{"line":25,"text":"Inga kurser."},{"line":30,"text":"En rad per kurs."}],"title":"Schedule","to":34,"what":"Samma uppbyggnad som RollCall, fast åt andra hållet."}],"say":"Skriver den studerandes namn och sedan varje kurs, med antal platser."},"start":{"name":"Programmet startar i Program.cs","refs":[{"code":"Course matematik = new Course(\"Matematik\", 2); // Skapar en kurs med två platser.","file":"Program.cs","from":1,"points":[],"title":"Första raden","to":1,"what":"Det här är den första rad som körs."}],"say":"Program.cs har ingen Main-metod. Raderna körs uppifrån och ner (top-level statements). Här skapas objekten och metoderna provas."},"stostring":{"name":"Hur en studerande visas som text","refs":[{"code":"public override string ToString() // Bestämmer hur den studerande visas som text.\n{\n    return Name; // Returnerar den studerandes namn.\n}","file":"Student.cs","from":36,"points":[],"title":"ToString","to":39,"what":"Returnerar namnet."}],"say":"En studerande visas bara med sitt namn."},"students":{"name":"Skapa tre studerande","refs":[{"code":"Student anna = new Student(\"Anna\"); // Skapar en studerande som heter Anna.\nStudent erik = new Student(\"Erik\"); // Skapar en studerande som heter Erik.\nStudent sara = new Student(\"Sara\"); // Skapar en studerande som heter Sara.","file":"Program.cs","from":4,"points":[],"title":"De studerande","to":6,"what":"new Student(\"Anna\") anropar konstruktorn i Student.cs."}],"say":"Tre Student-objekt skapas. Varje objekt har ett eget namn och en egen, tom kurslista."}},"order":["start","courses","students","enrollrun","print1","duprun","print2","removerun","print3","end","clscourse","clsstudent","join","enroll","ddup","errdup","dfull","errfull","add","leave","remove","din","errin","rem","rollcall","schedule","ctostring","stostring"]}</script>
+<script>
+(function () {
+  var DATA = JSON.parse(document.getElementById('data').textContent);
+  var panel = document.getElementById('panel');
+  var current = -1;
+
+  var KW = ('class override public return this void break bool char continue else false for foreach if in int long new null out property string true using var while').split(' ');
+  var TYPES = ('Console List System Collections Generic').split(' ');
+
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  // Splits C# code into pieces: [class, text]
+  function tokens(code) {
+    var out = [], re = /(\/\/[^\n]*)|(\$?"(?:[^"\\\n]|\\.)*")|('(?:[^'\\\n]|\\.)')|([A-Za-z_][A-Za-z0-9_]*)|([0-9]+)|([\s\S])/g, m;
+    while ((m = re.exec(code))) {
+      if (m[1]) out.push(['t-com', m[1]]);
+      else if (m[2]) out.push(['t-str', m[2]]);
+      else if (m[3]) out.push(['t-str', m[3]]);
+      else if (m[4]) out.push([KW.indexOf(m[4]) >= 0 ? 't-kw' : (TYPES.indexOf(m[4]) >= 0 ? 't-type' : ''), m[4]]);
+      else if (m[5]) out.push(['t-num', m[5]]);
+      else out.push(['', m[6]]);
+    }
+    return out;
+  }
+
+  function highlightLines(code) {
+    var lines = [''];
+    tokens(code).forEach(function (t) {
+      t[1].split('\n').forEach(function (p, k) {
+        if (k > 0) lines.push('');
+        if (p.length) lines[lines.length - 1] += t[0] ? '<span class="' + t[0] + '">' + esc(p) + '</span>' : esc(p);
+      });
+    });
+    return lines;
+  }
+
+  function render(idx) {
+    var id = DATA.order[idx], node = DATA.nodes[id];
+    current = idx;
+    document.querySelectorAll('.node.sel').forEach(function (e) { e.classList.remove('sel'); });
+    var g = document.querySelector('.node[data-id="' + id + '"]');
+    if (g) g.classList.add('sel');
+    document.getElementById('pos').textContent = (idx + 1) + ' / ' + DATA.order.length;
+
+    var h = '<h2>' + esc(node.name) + '</h2>';
+    h += '<div class="say"><b>Enkelt förklarat</b>' + esc(node.say) + '</div>';
+    node.refs.forEach(function (r, ri) {
+      var marked = {};
+      r.points.forEach(function (p) { marked[p.line] = true; });
+      h += '<div class="ref" data-ref="' + ri + '"><h3>' + esc(r.title) + '</h3>';
+      h += '<div class="where">' + esc(r.file) + ', rad ' + r.from + (r.to > r.from ? '–' + r.to : '') + '</div>';
+      h += '<p class="what">' + esc(r.what) + '</p>';
+      h += '<div class="code"><table>';
+      highlightLines(r.code).forEach(function (ln, k) {
+        var no = r.from + k;
+        h += '<tr data-line="' + no + '"' + (marked[no] ? ' class="mark"' : '') + '><td class="n">' + no + '</td><td>' + (ln || ' ') + '</td></tr>';
+      });
+      h += '</table></div>';
+      if (r.points.length) {
+        h += '<ul class="pts">';
+        r.points.forEach(function (p) {
+          h += '<li data-line="' + p.line + '" tabindex="0"><span class="ln-no">Rad ' + p.line + '</span><span>' + esc(p.text) + '</span></li>';
+        });
+        h += '</ul>';
+      }
+      h += '</div>';
+    });
+    panel.innerHTML = h;
+    panel.scrollTop = 0;
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+  }
+
+  function point(li) {
+    var ref = li.closest('.ref'), line = li.getAttribute('data-line');
+    ref.querySelectorAll('tr.hl').forEach(function (e) { e.classList.remove('hl'); });
+    ref.querySelectorAll('li.on').forEach(function (e) { e.classList.remove('on'); });
+    var tr = ref.querySelector('tr[data-line="' + line + '"]');
+    if (tr) { tr.classList.add('hl'); tr.scrollIntoView({ block: 'nearest' }); }
+    li.classList.add('on');
+  }
+
+  function step(d) {
+    var n = DATA.order.length;
+    render(current < 0 ? 0 : (current + d + n) % n);
+  }
+
+  document.querySelectorAll('.node').forEach(function (g) {
+    function go() { render(DATA.order.indexOf(g.getAttribute('data-id'))); }
+    g.addEventListener('click', go);
+    g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+  panel.addEventListener('click', function (e) { var li = e.target.closest('ul.pts li'); if (li) point(li); });
+  panel.addEventListener('mouseover', function (e) { var li = e.target.closest('ul.pts li'); if (li) point(li); });
+  panel.addEventListener('keydown', function (e) { var li = e.target.closest('ul.pts li'); if (li && e.key === 'Enter') point(li); });
+  document.getElementById('prev').addEventListener('click', function () { step(-1); });
+  document.getElementById('next').addEventListener('click', function () { step(1); });
+  document.addEventListener('keydown', function (e) {
+    if (e.target.closest && e.target.closest('.node, ul.pts li')) return;
+    if (e.key === 'ArrowRight') step(1);
+    if (e.key === 'ArrowLeft') step(-1);
+  });
+  document.getElementById('theme').addEventListener('click', function () {
+    var root = document.documentElement, dark = root.getAttribute('data-theme');
+    if (!dark) dark = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    root.setAttribute('data-theme', dark === 'dark' ? 'light' : 'dark');
+  });
+
+  var start = DATA.order.indexOf(location.hash.slice(1));
+  if (start >= 0) render(start);
+})();
+</script>
+</body>
+</html>
