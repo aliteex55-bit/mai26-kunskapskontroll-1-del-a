@@ -1,6 +1,6 @@
 # Kunskapskontroll 1 - Del A: Inköpslistan
 
-Ett konsolprogram i C# som sparar varunamn i `List<string>` och priser i `List<int>`. Samma index i de två listorna hör till samma vara. Lösningen finns i en enda källfil, `Inkopslista.cs`, med svenska kommentarer bredvid koden.
+Ett konsolprogram i C# som sparar varunamn i `List<string>` och priser i `List<int>`. Samma index i de två listorna hör till samma vara. Lösningen finns i en enda källfil, `Inkopslista.cs`, med kommentarer bredvid koden: svenska i grundprogrammet och engelska i extrafunktionerna `dyrast` och `sortera`.
 
 **Flödesschema:** [öppna det klickbara flödesschemat](https://aliteex55-bit.github.io/mai26-kunskapskontroll-1-del-a/flodesschema.html). Klicka på ett steg för att se koden bakom det, med en enkel förklaring.
 
