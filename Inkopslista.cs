@@ -57,6 +57,33 @@ while (true) // Upprepar programmet tills användaren avslutar.
         continue; // Shows the list again without adding "dyrast" as an item.
     }
 
+    if (input.Trim().ToLower() == "sortera") // Asked for: the optional extra that sorts the list by price. First step: move the cheapest item to the top.
+    {
+        int minIndex = 0; // Starts by assuming the first item is the cheapest.
+
+        for (int j = 1; j < prices.Count; j++) // Compares every other price with the cheapest so far.
+        {
+            if (prices[j] < prices[minIndex]) // A lower price becomes the new cheapest.
+            {
+                minIndex = j; // Remembers where the cheapest item is.
+            }
+        }
+
+        if (prices.Count > 0) // An empty list has nothing to move.
+        {
+            int tempPrice = prices[0]; // Keeps the first price while the swap happens.
+            prices[0] = prices[minIndex]; // Moves the cheapest price to the top.
+            prices[minIndex] = tempPrice; // Puts the old first price where the cheapest one was.
+
+            string tempName = names[0]; // Swaps the names in exactly the same way,
+            names[0] = names[minIndex]; // so that names[i] still belongs to prices[i]
+            names[minIndex] = tempName; // and the two lists stay in sync.
+        }
+
+        Console.WriteLine("Den billigaste varan ligger nu först."); // Confirms the move; the loop then shows the new order.
+        continue; // Shows the list again without adding "sortera" as an item.
+    }
+
     string numberText = input.Trim(); // Tar bort mellanslag runt ett möjligt nummer.
 
     if (numberText.StartsWith("+") || numberText.StartsWith("-")) // Ett heltal kan börja med plus eller minus.
