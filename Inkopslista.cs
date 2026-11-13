@@ -33,6 +33,30 @@ while (true) // Upprepar programmet tills användaren avslutar.
         continue; // Börjar nästa varv i loopen.
     }
 
+    if (input.Trim().ToLower() == "dyrast") // Asked for: the optional extra where the word "dyrast" shows the most expensive item.
+    {
+        if (names.Count == 0) // An empty list has no most expensive item.
+        {
+            Console.WriteLine("Listan är tom."); // Tells the user instead of crashing on an empty list.
+        }
+        else // The list has at least one item.
+        {
+            int maxIndex = 0; // Starts by assuming the first item is the most expensive.
+
+            for (int i = 1; i < prices.Count; i++) // Compares every other price with the highest so far.
+            {
+                if (prices[i] > prices[maxIndex]) // A higher price becomes the new maximum.
+                {
+                    maxIndex = i; // Remembers where the most expensive item is.
+                }
+            }
+
+            Console.WriteLine($"Dyrast: {names[maxIndex]} - {prices[maxIndex]} kr"); // Name and price come from the same index, so they belong together.
+        }
+
+        continue; // Shows the list again without adding "dyrast" as an item.
+    }
+
     string numberText = input.Trim(); // Tar bort mellanslag runt ett möjligt nummer.
 
     if (numberText.StartsWith("+") || numberText.StartsWith("-")) // Ett heltal kan börja med plus eller minus.
