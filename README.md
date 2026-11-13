@@ -17,6 +17,7 @@ Raden `#:property PublishAot=false` är en bygginställning som gör att filen k
 - Skriv ett varunamn och därefter ett heltalspris för att lägga till varan sist.
 - Skriv varans nummer för att ta bort både namn och pris.
 - Skriv `dyrast` för att se vilken vara som är dyrast (frivillig extrafunktion).
+- Skriv `sortera` för att sortera listan efter pris, billigast först (frivillig extrafunktion). Namn och pris flyttas tillsammans, så listorna hålls i synk.
 - Skriv `avsluta` för att avsluta programmet.
 - Listan visas numrerad med totalsumma efter varje val.
 - Ett ogiltigt pris lägger inte till någon vara.
@@ -24,8 +25,6 @@ Raden `#:property PublishAot=false` är en bygginställning som gör att filen k
 
 Exempel: lägg till Mjölk för 15 kr, Bröd för 32 kr och Ost för 89 kr. Summan blir 136 kr. Skriv `2` för att ta bort Bröd. Ost får då nummer 2 och summan blir 104 kr.
 
-Den frivilliga sorteringen efter pris ingår inte.
-
 ## Kontrollerat
 
-Tillägg, ordningsföljd, numrering, totalsumma, synkron borttagning, felaktiga priser, nummer utanför listan och mycket stora nummer har provkörts.
+Tillägg, ordningsföljd, numrering, totalsumma, synkron borttagning, felaktiga priser, nummer utanför listan och mycket stora nummer har provkörts. Extrafunktionerna `dyrast` och `sortera` är provkörda på tom lista, på lika priser och med borttagning efter sortering.
