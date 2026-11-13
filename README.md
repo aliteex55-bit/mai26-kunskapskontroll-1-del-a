@@ -32,6 +32,17 @@ Exempel: lägg till Mjölk för 15 kr, Bröd för 32 kr och Ost för 89 kr. Summ
 `flodesschema.html` är ett klickbart flödesschema över programmet. Klicka på ett steg för att se koden i `Inkopslista.cs` som utför det, med en enkel förklaring.
 Öppna det på [GitHub Pages](https://aliteex55-bit.github.io/mai26-kunskapskontroll-1-del-a/flodesschema.html), eller öppna filen i en webbläsare.
 
+## Del B i mappen del-b
+
+Mappen `del-b` innehåller del B, kurser och studerande, med sin historik. Kör den så här:
+
+```console
+cd del-b
+dotnet run
+```
+
+Del B finns också som eget repo: [mai26-kunskapskontroll-1-del-b](https://github.com/aliteex55-bit/mai26-kunskapskontroll-1-del-b).
+
 ## Kontrollerat
 
 Tillägg, ordningsföljd, numrering, totalsumma, synkron borttagning, felaktiga priser, nummer utanför listan och mycket stora nummer har provkörts. Extrafunktionerna `dyrast` och `sortera` är provkörda på tom lista, på lika priser och med borttagning efter sortering.
