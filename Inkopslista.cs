@@ -57,30 +57,30 @@ while (true) // Upprepar programmet tills användaren avslutar.
         continue; // Shows the list again without adding "dyrast" as an item.
     }
 
-    if (input.Trim().ToLower() == "sortera") // Asked for: the optional extra that sorts the list by price. First step: move the cheapest item to the top.
+    if (input.Trim().ToLower() == "sortera") // Asked for: the optional extra that sorts the list by price, cheapest first.
     {
-        int minIndex = 0; // Starts by assuming the first item is the cheapest.
-
-        for (int j = 1; j < prices.Count; j++) // Compares every other price with the cheapest so far.
+        for (int i = 0; i < prices.Count; i++) // Asked for in steps: repeats the "move the cheapest first" step for every position i.
         {
-            if (prices[j] < prices[minIndex]) // A lower price becomes the new cheapest.
+            int minIndex = i; // Starts by assuming the item at position i is the cheapest of the rest.
+
+            for (int j = i + 1; j < prices.Count; j++) // Only looks at the items after position i; the ones before are already sorted.
             {
-                minIndex = j; // Remembers where the cheapest item is.
+                if (prices[j] < prices[minIndex]) // A lower price becomes the new cheapest.
+                {
+                    minIndex = j; // Remembers where the cheapest item is.
+                }
             }
-        }
 
-        if (prices.Count > 0) // An empty list has nothing to move.
-        {
-            int tempPrice = prices[0]; // Keeps the first price while the swap happens.
-            prices[0] = prices[minIndex]; // Moves the cheapest price to the top.
-            prices[minIndex] = tempPrice; // Puts the old first price where the cheapest one was.
+            int tempPrice = prices[i]; // Keeps the price at position i while the swap happens.
+            prices[i] = prices[minIndex]; // Moves the cheapest remaining price to position i.
+            prices[minIndex] = tempPrice; // Puts the old price where the cheapest one was.
 
-            string tempName = names[0]; // Swaps the names in exactly the same way,
-            names[0] = names[minIndex]; // so that names[i] still belongs to prices[i]
+            string tempName = names[i]; // Swaps the names in exactly the same way,
+            names[i] = names[minIndex]; // so that names[i] still belongs to prices[i]
             names[minIndex] = tempName; // and the two lists stay in sync.
         }
 
-        Console.WriteLine("Den billigaste varan ligger nu först."); // Confirms the move; the loop then shows the new order.
+        Console.WriteLine("Listan är sorterad efter pris, billigast först."); // Confirms the sort; the loop then shows the new order.
         continue; // Shows the list again without adding "sortera" as an item.
     }
 
